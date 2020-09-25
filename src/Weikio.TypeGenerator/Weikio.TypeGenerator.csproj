@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <Description>Type Generator for .NET Standard can generate types from delegates and delegating types for existing .NET types.</Description>
+    <PackageDescription>Everything is a plugin! Use assemblies, NuGet packages and C# Scripts as plugins in your .NET Core Applications.</PackageDescription>
+    <PackageId>Weikio.TypeGenerator</PackageId>
+    <Product>Weikio.TypeGenerator</Product>
+    <PackageTags>type;assembly;dynamic;runtime;generation;wrapping;roslyn</PackageTags>
+    <Title>Weikio.TypeGenerator</Title>
+    <RepositoryUrl>https://github.com/weikio/Weikio.TypeGenerator</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.3.1"/>
+    <PackageReference Include="System.Reflection.MetadataLoadContext" Version="4.7.1"/>
+    <PackageReference Include="System.Runtime.Loader" Version="4.3.0"/>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
+  </ItemGroup>
+</Project>

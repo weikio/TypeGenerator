@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Weikio.TypeGenerator", "Weikio.TypeGenerator\Weikio.TypeGenerator.csproj", "{3C02301B-E194-4526-90AD-6E4D7BD106E6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Weikio.TypeGenerator.Tests", "..\tests\unit\Weikio.TypeGenerator.Tests\Weikio.TypeGenerator.Tests.csproj", "{5688A00D-5D2E-4B78-8C88-64FC01B13FAC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3C02301B-E194-4526-90AD-6E4D7BD106E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C02301B-E194-4526-90AD-6E4D7BD106E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C02301B-E194-4526-90AD-6E4D7BD106E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C02301B-E194-4526-90AD-6E4D7BD106E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5688A00D-5D2E-4B78-8C88-64FC01B13FAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5688A00D-5D2E-4B78-8C88-64FC01B13FAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5688A00D-5D2E-4B78-8C88-64FC01B13FAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5688A00D-5D2E-4B78-8C88-64FC01B13FAC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

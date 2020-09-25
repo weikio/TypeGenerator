@@ -1,25 +1,55 @@
-# Weik.io Template
+# Type Generator for .NET
+
+Provides functionality for generating .NET types and assemblies runtime. 
+
+[![NuGet Version](https://img.shields.io/nuget/v/Weikio.TypeGenerator.svg?style=flat&label=Weikio.TypeGenerator)](https://www.nuget.org/packages/Weikio.TypeGenerator/)
+
+## Features
+
+#### Generate types and assemblies from source code
+#### Wrap delegates (System.Func and System.Action) inside new types
+#### Wrap existing types inside new types
+
+When wrapping delegates and types, the delegate and method parameters can be converted to constructor parameters and properties.
+
+Note: The intendent use case is not proxy classes and the generated types don't inherit the original types.
  
-Template for Weik.io's .NET Core projects. Contains the following constructs:
-
-* Coding conventions in the format of .editorconfig.
-* Folder structure
-* Global.json
-* Git ignore
-
-This template can be used as a starting point for all the Weik.io projects.
-
 ## Usage
 
-The template can be used when creating a new repository in GitHub:
+### Generating assembly from a source code
 
-![Creating a new repository using the template](2020-08-10-13-30-31.png)
+````
+var code = @"public class MyClass
+       {
+           public void RunThings()
+           {
+               var y = 0;
+               var a = 1;
 
-Select Weikio/Template from the Repository teamplte dropdown.
+               a = y + 10;
+           }
+       }";
 
-Alternatively a new repository with this template can be created from https://github.com/weikio/Template:
+var assembly = _generator.GenerateAssembly(code);
 
-![Creating a new repository from the template's repository](2020-08-10-13-34-18.png)
+var type = assembly.GetExportedTypes().Single();
+````
+
+### Generating wrapping type from a delegate
+
+````
+var converter = new DelegateToTypeConverter();
+
+var type = converter.CreateType(new Func<int, bool>(i =>
+{
+    System.Console.WriteLine($"Hello from delegate. I is {i}");
+
+    return true;
+}));
+
+dynamic instance = Activator.CreateInstance(type);
+var result = instance.Run(25);
+````
 
 ## License
 
