@@ -187,6 +187,15 @@ namespace Weikio.TypeGenerator.Types
                 code.AppendLine(
                     $"Weikio.TypeGenerator.Types.TypeCache.Details(System.Guid.Parse(\"{id.ToString()}\")).OnBeforeMethod.DynamicInvoke(_instance, _instance.GetType().GetMethod(\"{originalMethodName}\", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static));");
             }
+            
+            if (options.OnBeforeMethodCustomCodeGenerator != null)
+            {
+                code.AppendLine("// Custom before method code begins");
+
+                code.AppendLine(options.OnBeforeMethodCustomCodeGenerator(options, originalType, methodInfo));
+                
+                code.AppendLine("// Custom before method code ends");
+            }
 
             if (typeof(void) != returnType)
             {
@@ -202,6 +211,15 @@ namespace Weikio.TypeGenerator.Types
             {
                 code.AppendLine(
                     $"Weikio.TypeGenerator.Types.TypeCache.Details(System.Guid.Parse(\"{id.ToString()}\")).OnAfterMethod.DynamicInvoke(_instance, _instance.GetType().GetMethod(\"{originalMethodName}\", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static));");
+            }
+
+            if (options.OnAfterMethodCustomCodeGenerator != null)
+            {
+                code.AppendLine("// Custom after method code begins");
+
+                code.AppendLine(options.OnAfterMethodCustomCodeGenerator(options, originalType, methodInfo));
+                
+                code.AppendLine("// Custom after method code ends");
             }
 
             if (typeof(void) != returnType)
@@ -259,6 +277,15 @@ namespace Weikio.TypeGenerator.Types
                 code.AppendLine(
                     $"Weikio.TypeGenerator.Types.TypeCache.Details(System.Guid.Parse(\"{id.ToString()}\")).OnConstructor.DynamicInvoke(_instance);");
 
+                if (options.OnConstructorCustomCodeGenerator != null)
+                {
+                    code.AppendLine("// Custom constructor code begins");
+
+                    code.AppendLine(options.OnConstructorCustomCodeGenerator(options, originalType));
+                
+                    code.AppendLine("// Custom constructor code ends");
+                }
+                
                 code.AppendLine("}"); // Close constructor
             }
             else if (options.OnConstructor != null)
@@ -268,6 +295,32 @@ namespace Weikio.TypeGenerator.Types
 
                 code.AppendLine(
                     $"Weikio.TypeGenerator.Types.TypeCache.Details(System.Guid.Parse(\"{id.ToString()}\")).OnConstructor.DynamicInvoke(_instance);");
+
+                if (options.OnConstructorCustomCodeGenerator != null)
+                {
+                    code.AppendLine("// Custom constructor code begins");
+
+                    code.AppendLine(options.OnConstructorCustomCodeGenerator(options, originalType));
+                
+                    code.AppendLine("// Custom constructor code ends");
+                }
+                
+                code.AppendLine("}"); // Close constructor
+            }
+            else
+            {
+                code.AppendLine($"public {GetTypeName(options, originalType)}()");
+                code.AppendLine("{");
+
+                if (options.OnConstructorCustomCodeGenerator != null)
+                {
+                    code.AppendLine("// Custom constructor code begins");
+
+                    code.AppendLine(options.OnConstructorCustomCodeGenerator(options, originalType));
+                
+                    code.AppendLine("// Custom constructor code ends");
+                }
+                
                 code.AppendLine("}"); // Close constructor
             }
         }

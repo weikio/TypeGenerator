@@ -10,6 +10,7 @@ namespace Weikio.TypeGenerator.Types
         public string TypeName { get; set; } = "GeneratedType";
         public string NamespaceName { get; set; } = "GeneratedNamespace";
         public List<string> IncludedMethods { get; set; } = new List<string>();
+
         public Func<TypeToTypeWrapperOptions, Type, MethodInfo, bool> IncludeMethod { get; set; } = (options, originalType, method) =>
         {
             if (method.IsAbstract)
@@ -41,22 +42,27 @@ namespace Weikio.TypeGenerator.Types
             {
                 return false;
             }
-            
+
             if (method.DeclaringType != originalType)
             {
                 return false;
             }
-            
+
             return true;
         };
-        
-        public Func<TypeToTypeWrapperOptions, Type, MethodInfo, string> MethodNameGenerator { get; set; } = (options, originalType, methodInfo) => methodInfo.Name;
+
+        public Func<TypeToTypeWrapperOptions, Type, MethodInfo, string> MethodNameGenerator { get; set; } =
+            (options, originalType, methodInfo) => methodInfo.Name;
+
         public Func<TypeToTypeWrapperOptions, Type, string> TypeNameGenerator { get; set; } = (options, originalType) => options.TypeName;
         public Func<TypeToTypeWrapperOptions, Type, string> NamespaceNameGenerator { get; set; } = (options, originalType) => options.NamespaceName;
         public Func<TypeToTypeWrapperOptions, Type, object> Factory { get; set; } = (options, originalType) => Activator.CreateInstance(originalType);
         public Action<TypeToTypeWrapperOptions, Type, object> OnConstructor { get; set; } = null;
+        public Func<TypeToTypeWrapperOptions, Type, string> OnConstructorCustomCodeGenerator { get; set; } = (options, originalType) => "";
         public Action<TypeToTypeWrapperOptions, Type, object, MethodInfo> OnBeforeMethod { get; set; } = null;
+        public Func<TypeToTypeWrapperOptions, Type, MethodInfo, string> OnBeforeMethodCustomCodeGenerator { get; set; } = (options, originalType, methodInfo) => "";
         public Action<TypeToTypeWrapperOptions, Type, object, MethodInfo> OnAfterMethod { get; set; } = null;
+        public Func<TypeToTypeWrapperOptions, Type, MethodInfo, string> OnAfterMethodCustomCodeGenerator { get; set; } = (options, originalType, methodInfo) => "";
         public Func<TypeToTypeWrapperOptions, Type, string> CustomCodeGenerator { get; set; } = (options, originalType) => "";
     }
 }

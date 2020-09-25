@@ -181,6 +181,25 @@ namespace Weikio.TypeGenerator.Tests
         }
 
         [Fact]
+        public void CanRunCodeBeforeMethodExecutionUsingString()
+        {
+            var options = new TypeToTypeWrapperOptions()
+            {
+                OnBeforeMethodCustomCodeGenerator = (wrapperOptions, type, mi) => "_instance.AddCount(4);"
+            };
+
+            var wrapper = new TypeToTypeWrapper();
+            var result = wrapper.CreateType(typeof(TestClass), options);
+
+            dynamic instance = Activator.CreateInstance(result);
+            instance.Run();
+            instance.Run();
+
+            var instanceCount = instance.GetCount();
+            Assert.Equal(12, instanceCount);
+        }
+        
+        [Fact]
         public void CanRunCodeAfterMethodExecution()
         {
             var options = new TypeToTypeWrapperOptions()
@@ -201,6 +220,25 @@ namespace Weikio.TypeGenerator.Tests
             var instanceCount = instance.GetCount();
             Assert.Equal(24, instanceCount);
         }
+        
+        [Fact]
+        public void CanRunCodeAfterMethodExecutionUsingString()
+        {
+            var options = new TypeToTypeWrapperOptions()
+            {
+                OnAfterMethodCustomCodeGenerator = (wrapperOptions, type, mi) => "_instance.AddCount(18);"
+            };
+
+            var wrapper = new TypeToTypeWrapper();
+            var result = wrapper.CreateType(typeof(TestClass), options);
+
+            dynamic instance = Activator.CreateInstance(result);
+            instance.Run();
+            instance.Run();
+
+            var instanceCount = instance.GetCount();
+            Assert.Equal(36, instanceCount);
+        }        
 
         [Fact]
         public void CanRunCodeOnConstructor()
@@ -220,6 +258,23 @@ namespace Weikio.TypeGenerator.Tests
             var instanceCount = instance.GetCount();
 
             Assert.Equal(15, instanceCount);
+        }
+        
+        [Fact]
+        public void CanRunCodeOnConstructorUsingString()
+        {
+            var options = new TypeToTypeWrapperOptions()
+            {
+                OnConstructorCustomCodeGenerator = (wrapperOptions, type) => "_instance.AddCount(21);"
+            };
+
+            var wrapper = new TypeToTypeWrapper();
+            var result = wrapper.CreateType(typeof(TestClass), options);
+
+            dynamic instance = Activator.CreateInstance(result);
+            var instanceCount = instance.GetCount();
+
+            Assert.Equal(21, instanceCount);
         }
 
         [Fact]
