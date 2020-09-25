@@ -8,7 +8,7 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <Description>Type Generator for .NET Standard can generate types from delegates and delegating types for existing .NET types.</Description>
-    <PackageDescription>Everything is a plugin! Use assemblies, NuGet packages and C# Scripts as plugins in your .NET Core Applications.</PackageDescription>
+    <PackageDescription>Type Generator for .NET Standard can generate types from delegates and delegating types for existing .NET types.</PackageDescription>
     <PackageId>Weikio.TypeGenerator</PackageId>
     <Product>Weikio.TypeGenerator</Product>
     <PackageTags>type;assembly;dynamic;runtime;generation;wrapping;roslyn</PackageTags>
