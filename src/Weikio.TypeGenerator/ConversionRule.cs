@@ -3,12 +3,12 @@ using System.Reflection;
 
 namespace Weikio.TypeGenerator
 {
-    public class ConversionRule
+    public class ParameterConversionRule
     {
         private readonly Predicate<ParameterInfo> _canHandle;
         private readonly Func<ParameterInfo, ParameterConversion> _handle;
 
-        public ConversionRule(Predicate<ParameterInfo> canHandle, Func<ParameterInfo, ParameterConversion> handle)
+        public ParameterConversionRule(Predicate<ParameterInfo> canHandle, Func<ParameterInfo, ParameterConversion> handle)
         {
             if (canHandle == null)
             {

@@ -10,10 +10,10 @@ namespace Weikio.TypeGenerator.Delegates
     /// <summary>
     /// Allows the creation of a Type from a delegate (System.Action, System.Func)
     /// </summary>
-    public class DelegateToTypeConverter
+    public class DelegateToTypeWrapper
     {
         public Type CreateType(MulticastDelegate multicastDelegate,
-            DelegatePluginCatalogOptions options = default)
+            DelegateToTypeWrapperOptions options = default)
         {
             var methodInfo = multicastDelegate.GetMethodInfo();
 
@@ -45,7 +45,7 @@ namespace Weikio.TypeGenerator.Delegates
             var conversionRules = options?.ConversionRules;
             if (conversionRules == null)
             {
-                conversionRules = new List<ConversionRule>();
+                conversionRules = new List<ParameterConversionRule>();
             }
 
             DoConversions(parameters, conversionRules, constructorParameterNames, constructorParameterNamesWithTypes, constructorFielsNamesWithTypes, delegateMethodParameters, propertyNamesWithTypes, methodParameterNamesWithTypes);
@@ -71,7 +71,7 @@ namespace Weikio.TypeGenerator.Delegates
             return result;
         }
 
-        private static void CreateDelegateWrapperMethod(DelegatePluginCatalogOptions options, Type returnType, StringBuilder code, List<string> methodParameterNamesWithTypes,
+        private static void CreateDelegateWrapperMethod(DelegateToTypeWrapperOptions options, Type returnType, StringBuilder code, List<string> methodParameterNamesWithTypes,
             Guid id, List<string> delegateMethodParameters)
         {
             if (typeof(void) != returnType)
@@ -86,7 +86,7 @@ namespace Weikio.TypeGenerator.Delegates
             }
 
             code.AppendLine("{");
-            code.AppendLine($"var deleg = Weikio.TypeGenerator.DelegateCache.Get(System.Guid.Parse(\"{id.ToString()}\"));");
+            code.AppendLine($"var deleg = Weikio.TypeGenerator.Delegates.DelegateCache.Get(System.Guid.Parse(\"{id.ToString()}\"));");
 
             if (typeof(void) != returnType)
             {
@@ -117,7 +117,7 @@ namespace Weikio.TypeGenerator.Delegates
             }
         }
 
-        private static void CreateConstructor(DelegatePluginCatalogOptions options, List<string> constructorParameterNames, List<string> constructorFielsNamesWithTypes,
+        private static void CreateConstructor(DelegateToTypeWrapperOptions options, List<string> constructorParameterNames, List<string> constructorFielsNamesWithTypes,
             StringBuilder code, List<string> constructorParameterNamesWithTypes)
         {
             if (constructorParameterNames?.Any() == true)
@@ -139,7 +139,7 @@ namespace Weikio.TypeGenerator.Delegates
             }
         }
 
-        private static void DoConversions(ParameterInfo[] parameters, List<ConversionRule> conversionRules, List<string> constructorParameterNames, List<string> constructorParameterNamesWithTypes,
+        private static void DoConversions(ParameterInfo[] parameters, List<ParameterConversionRule> conversionRules, List<string> constructorParameterNames, List<string> constructorParameterNamesWithTypes,
             List<string> constructorFielsNamesWithTypes, List<string> delegateMethodParameters, List<string> propertyNamesWithTypes, List<string> methodParameterNamesWithTypes)
         {
             for (var index = 0; index < parameters.Length; index++)
@@ -236,7 +236,7 @@ namespace Weikio.TypeGenerator.Delegates
         {
             generator.ReferenceAssemblyContainingType<Action>();
             generator.ReferenceAssemblyContainingType<DelegateCache>();
-            generator.ReferenceAssemblyContainingType<DelegateToTypeConverter>();
+            generator.ReferenceAssemblyContainingType<DelegateToTypeWrapper>();
 
             foreach (var allType in allTypes)
             {
@@ -265,7 +265,7 @@ namespace Weikio.TypeGenerator.Delegates
             return allTypes;
         }
 
-        private static string GetMethodName(DelegatePluginCatalogOptions options)
+        private static string GetMethodName(DelegateToTypeWrapperOptions options)
         {
             if (options?.MethodNameGenerator != null)
             {
@@ -275,7 +275,7 @@ namespace Weikio.TypeGenerator.Delegates
             return "Run";
         }
         
-        private static string GetNamespace(DelegatePluginCatalogOptions options)
+        private static string GetNamespace(DelegateToTypeWrapperOptions options)
         {
             if (options?.NamespaceNameGenerator != null)
             {
@@ -285,7 +285,7 @@ namespace Weikio.TypeGenerator.Delegates
             return "GeneratedNamespace";
         }
         
-        private static string GetTypeName(DelegatePluginCatalogOptions options)
+        private static string GetTypeName(DelegateToTypeWrapperOptions options)
         {
             if (options?.TypeNameGenerator != null)
             {

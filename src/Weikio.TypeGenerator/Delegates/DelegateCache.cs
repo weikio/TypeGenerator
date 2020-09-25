@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Weikio.TypeGenerator
+namespace Weikio.TypeGenerator.Delegates
 {
     public class DelegateCache
     {

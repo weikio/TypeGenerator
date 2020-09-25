@@ -21,7 +21,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void CanConvertDelegateToType()
         {
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var result = converter.CreateType(new Func<int, Task<bool>>(async i =>
             {
@@ -35,7 +35,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void GeneratedTypeWorks()
         {
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var type = converter.CreateType(new Func<int, bool>(i =>
             {
@@ -51,7 +51,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void ByDefaultNoProperties()
         {
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var result = converter.CreateType(new Func<int, Task<bool>>(async i =>
             {
@@ -68,7 +68,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void ByDefaultRunMethod()
         {
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var result = converter.CreateType(new Func<int, Task<bool>>(async i =>
             {
@@ -87,7 +87,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void ByDefaultGeneratedNamespace()
         {
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var result = converter.CreateType(new Func<int, Task<bool>>(async i =>
             {
@@ -104,7 +104,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void CanConfigureNamespace()
         {
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var type = converter.CreateType(new Func<int, Task<bool>>(async i =>
             {
@@ -112,7 +112,7 @@ namespace Weikio.TypeGenerator.Tests
                 _testOutputHelper.WriteLine("Hello from test");
 
                 return true;
-            }), new DelegatePluginCatalogOptions() { NamespaceName = "HelloThereNs" });
+            }), new DelegateToTypeWrapperOptions() { NamespaceName = "HelloThereNs" });
 
             Assert.Equal("HelloThereNs", type.Namespace);
         }
@@ -120,7 +120,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void CanConfigureNamespaceUsinGenerator()
         {
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var type = converter.CreateType(new Func<int, Task<bool>>(async i =>
                 {
@@ -128,7 +128,7 @@ namespace Weikio.TypeGenerator.Tests
                     _testOutputHelper.WriteLine("Hello from test");
 
                     return true;
-                }), new DelegatePluginCatalogOptions() { NamespaceNameGenerator = options => "GeneratorNS" }
+                }), new DelegateToTypeWrapperOptions() { NamespaceNameGenerator = options => "GeneratorNS" }
             );
 
             Assert.Equal("GeneratorNS", type.Namespace);
@@ -137,7 +137,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void ByDefaultGeneratedTypeName()
         {
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var result = converter.CreateType(new Func<int, Task<bool>>(async i =>
             {
@@ -153,7 +153,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void CanConfigureTypename()
         {
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var result = converter.CreateType(new Func<int, Task<bool>>(async i =>
             {
@@ -161,7 +161,7 @@ namespace Weikio.TypeGenerator.Tests
                 _testOutputHelper.WriteLine("Hello from test");
 
                 return true;
-            }), new DelegatePluginCatalogOptions() { TypeName = "HelloThereType" });
+            }), new DelegateToTypeWrapperOptions() { TypeName = "HelloThereType" });
 
             Assert.Equal("HelloThereType", result.Name);
         }
@@ -169,7 +169,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void CanConfigureTypenameUsinGenerator()
         {
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var result = converter.CreateType(new Func<int, Task<bool>>(async i =>
             {
@@ -177,7 +177,7 @@ namespace Weikio.TypeGenerator.Tests
                 _testOutputHelper.WriteLine("Hello from test");
 
                 return true;
-            }), new DelegatePluginCatalogOptions() { TypeNameGenerator = options => "GeneratorTypeName" });
+            }), new DelegateToTypeWrapperOptions() { TypeNameGenerator = options => "GeneratorTypeName" });
 
             Assert.Equal("GeneratorTypeName", result.Name);
         }
@@ -185,7 +185,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void CanConfigureGeneratedMethodName()
         {
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var result = converter.CreateType(new Func<int, Task<bool>>(async i =>
             {
@@ -193,7 +193,7 @@ namespace Weikio.TypeGenerator.Tests
                 _testOutputHelper.WriteLine("Hello from test");
 
                 return true;
-            }), new DelegatePluginCatalogOptions() { MethodName = "HelloMethod" });
+            }), new DelegateToTypeWrapperOptions() { MethodName = "HelloMethod" });
 
             var method = result.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly).Single();
 
@@ -203,7 +203,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void CanConfigureGeneratedMethodNameUsingGenerator()
         {
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var result = converter.CreateType(new Func<int, Task<bool>>(async i =>
             {
@@ -211,7 +211,7 @@ namespace Weikio.TypeGenerator.Tests
                 _testOutputHelper.WriteLine("Hello from test");
 
                 return true;
-            }), new DelegatePluginCatalogOptions() { MethodNameGenerator = catalogOptions => "MethodGeneratorName" });
+            }), new DelegateToTypeWrapperOptions() { MethodNameGenerator = catalogOptions => "MethodGeneratorName" });
 
             var method = result.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly).Single();
 
@@ -221,7 +221,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void ByDefaultNoConstructorParameters()
         {
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var result = converter.CreateType(new Func<int, Task<bool>>(async i =>
             {
@@ -242,12 +242,12 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void CanConvertParameterToProperty()
         {
-            var rules = new List<ConversionRule>()
+            var rules = new List<ParameterConversionRule>()
             {
-                new ConversionRule(info => info.ParameterType == typeof(int), nfo => new ParameterConversion() { ToPublicProperty = true }),
+                new ParameterConversionRule(info => info.ParameterType == typeof(int), nfo => new ParameterConversion() { ToPublicProperty = true }),
             };
 
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var result = converter.CreateType(new Func<int, Task<bool>>(async i =>
             {
@@ -255,7 +255,7 @@ namespace Weikio.TypeGenerator.Tests
                 _testOutputHelper.WriteLine("Hello from test");
 
                 return true;
-            }), new DelegatePluginCatalogOptions() { ConversionRules = rules });
+            }), new DelegateToTypeWrapperOptions() { ConversionRules = rules });
 
             Assert.Single(result.GetProperties());
         }
@@ -263,12 +263,12 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void CanConvertParameterToConstructorParameter()
         {
-            var rules = new List<ConversionRule>()
+            var rules = new List<ParameterConversionRule>()
             {
-                new ConversionRule(info => info.ParameterType == typeof(int), nfo => new ParameterConversion() { ToConstructor = true })
+                new ParameterConversionRule(info => info.ParameterType == typeof(int), nfo => new ParameterConversion() { ToConstructor = true })
             };
 
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var result = converter.CreateType(new Func<int, Task<bool>>(async i =>
             {
@@ -276,7 +276,7 @@ namespace Weikio.TypeGenerator.Tests
                 _testOutputHelper.WriteLine("Hello from test");
 
                 return true;
-            }), new DelegatePluginCatalogOptions() { ConversionRules = rules });
+            }), new DelegateToTypeWrapperOptions() { ConversionRules = rules });
 
             Assert.Single(result.GetConstructors());
             Assert.Single(result.GetConstructors().Single().GetParameters());
@@ -285,22 +285,22 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void CanConvertMultipleParametersToConstructorAndPropertyParameters()
         {
-            var rules = new List<ConversionRule>()
+            var rules = new List<ParameterConversionRule>()
             {
-                new ConversionRule(info => info.ParameterType == typeof(int), nfo => new ParameterConversion() { ToConstructor = true }),
-                new ConversionRule(info => info.ParameterType == typeof(string), nfo => new ParameterConversion() { ToPublicProperty = true }),
-                new ConversionRule(info => info.ParameterType == typeof(bool), nfo => new ParameterConversion() { ToPublicProperty = true }),
-                new ConversionRule(info => info.ParameterType == typeof(decimal), nfo => new ParameterConversion() { ToConstructor = true }),
+                new ParameterConversionRule(info => info.ParameterType == typeof(int), nfo => new ParameterConversion() { ToConstructor = true }),
+                new ParameterConversionRule(info => info.ParameterType == typeof(string), nfo => new ParameterConversion() { ToPublicProperty = true }),
+                new ParameterConversionRule(info => info.ParameterType == typeof(bool), nfo => new ParameterConversion() { ToPublicProperty = true }),
+                new ParameterConversionRule(info => info.ParameterType == typeof(decimal), nfo => new ParameterConversion() { ToConstructor = true }),
             };
 
-            var converter = new DelegateToTypeConverter();
+            var converter = new DelegateToTypeWrapper();
 
             var result = converter.CreateType(new Func<int, string, bool, decimal, char, bool>((i, s, arg3, arg4, c) =>
             {
                 _testOutputHelper.WriteLine("Hello from test");
 
                 return true;
-            }), new DelegatePluginCatalogOptions() { ConversionRules = rules });
+            }), new DelegateToTypeWrapperOptions() { ConversionRules = rules });
 
             Assert.Single(result.GetConstructors());
             Assert.Equal(2, result.GetConstructors().Single().GetParameters().Length);
