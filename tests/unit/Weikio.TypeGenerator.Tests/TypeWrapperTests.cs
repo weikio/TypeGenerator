@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Newtonsoft.Json;
 using Weikio.TypeGenerator.Types;
 using Xunit;
 using Xunit.Abstractions;
@@ -183,10 +188,7 @@ namespace Weikio.TypeGenerator.Tests
         [Fact]
         public void CanRunCodeBeforeMethodExecutionUsingString()
         {
-            var options = new TypeToTypeWrapperOptions()
-            {
-                OnBeforeMethodCustomCodeGenerator = (wrapperOptions, type, mi) => "_instance.AddCount(4);"
-            };
+            var options = new TypeToTypeWrapperOptions() { OnBeforeMethodCustomCodeGenerator = (wrapperOptions, type, mi) => "_instance.AddCount(4);" };
 
             var wrapper = new TypeToTypeWrapper();
             var result = wrapper.CreateType(typeof(TestClass), options);
@@ -198,7 +200,7 @@ namespace Weikio.TypeGenerator.Tests
             var instanceCount = instance.GetCount();
             Assert.Equal(12, instanceCount);
         }
-        
+
         [Fact]
         public void CanRunCodeAfterMethodExecution()
         {
@@ -220,14 +222,11 @@ namespace Weikio.TypeGenerator.Tests
             var instanceCount = instance.GetCount();
             Assert.Equal(24, instanceCount);
         }
-        
+
         [Fact]
         public void CanRunCodeAfterMethodExecutionUsingString()
         {
-            var options = new TypeToTypeWrapperOptions()
-            {
-                OnAfterMethodCustomCodeGenerator = (wrapperOptions, type, mi) => "_instance.AddCount(18);"
-            };
+            var options = new TypeToTypeWrapperOptions() { OnAfterMethodCustomCodeGenerator = (wrapperOptions, type, mi) => "_instance.AddCount(18);" };
 
             var wrapper = new TypeToTypeWrapper();
             var result = wrapper.CreateType(typeof(TestClass), options);
@@ -238,7 +237,7 @@ namespace Weikio.TypeGenerator.Tests
 
             var instanceCount = instance.GetCount();
             Assert.Equal(36, instanceCount);
-        }        
+        }
 
         [Fact]
         public void CanRunCodeOnConstructor()
@@ -259,14 +258,11 @@ namespace Weikio.TypeGenerator.Tests
 
             Assert.Equal(15, instanceCount);
         }
-        
+
         [Fact]
         public void CanRunCodeOnConstructorUsingString()
         {
-            var options = new TypeToTypeWrapperOptions()
-            {
-                OnConstructorCustomCodeGenerator = (wrapperOptions, type) => "_instance.AddCount(21);"
-            };
+            var options = new TypeToTypeWrapperOptions() { OnConstructorCustomCodeGenerator = (wrapperOptions, type) => "_instance.AddCount(21);" };
 
             var wrapper = new TypeToTypeWrapper();
             var result = wrapper.CreateType(typeof(TestClass), options);
@@ -296,18 +292,197 @@ namespace Weikio.TypeGenerator.Tests
             dynamic instance = Activator.CreateInstance(result);
             instance.RunThings();
         }
-        
+
         [Fact]
         public void CanWrapTypeWithConstructor()
         {
             var wrapper = new TypeToTypeWrapper();
-            var result = wrapper.CreateType(typeof(TestClassWithConstructor), new TypeToTypeWrapperOptions()
-            {
-                Factory = (options, type) => new TestClassWithConstructor("Hello there")
-            });
+
+            var result = wrapper.CreateType(typeof(TestClassWithConstructor),
+                new TypeToTypeWrapperOptions() { Factory = (options, type) => new TestClassWithConstructor("Hello there") });
 
             dynamic instance = Activator.CreateInstance(result);
             instance.Get();
+        }
+
+        [Fact]
+        public void CanAddConstructorParameters()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(TestClass),
+                new TypeToTypeWrapperOptions()
+                {
+                    AdditionalConstructorParameters = new List<AdditionalParameter>() { new AdditionalParameter(typeof(string), "myParam") }
+                });
+
+            var constructor = result.GetConstructor(new[] { typeof(string) });
+
+            Assert.NotNull(constructor);
+        }
+
+        [Fact]
+        public void CanAddAdditionalNamespaces()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(TestClass),
+                new TypeToTypeWrapperOptions()
+                {
+                    AdditionalNamespaces = new List<string>() { "System.Diagnostics" },
+                    OnConstructorCustomCodeGenerator = (options, type) => "Debug.WriteLine(\"Hello\");"
+                });
+        }
+
+        [Fact]
+        public void AddsSourceCodeIntoPrivateFieldByDefault()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(TestClass),
+                new TypeToTypeWrapperOptions() { CustomCodeGenerator = (options, type) => "public string GetCode(){return _source;}" });
+
+            dynamic instance = Activator.CreateInstance(result);
+            var source = instance.GetCode();
+
+            _testOutputHelper.WriteLine(source);
+        }
+
+        [Fact]
+        public void CanDisableSourceCodeField()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                wrapper.CreateType(typeof(TestClass),
+                    new TypeToTypeWrapperOptions()
+                    {
+                        CustomCodeGenerator = (options, type) => "public string GetCode(){return _source;}", IsSourceCodeIncluded = false
+                    });
+            });
+        }
+
+        [Fact]
+        public void CanAddAdditionalReferences()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(TestClass),
+                new TypeToTypeWrapperOptions()
+                {
+                    AdditionalReferences = new List<Assembly>() { typeof(JsonConverter).Assembly },
+                    OnConstructorCustomCodeGenerator = (options, type) => "var arr = new Newtonsoft.Json.Linq.JArray();"
+                });
+        }
+
+        [AttributeUsage(AttributeTargets.All)]
+        public class DeveloperAttribute : Attribute
+        {
+            // Private fields.
+            private string name;
+            private string level;
+            private bool reviewed;
+
+            // This constructor defines two required parameters: name and level.
+
+            public DeveloperAttribute(string name, string level)
+            {
+                this.name = name;
+                this.level = level;
+                reviewed = false;
+            }
+
+            // Define Name property.
+            // This is a read-only attribute.
+
+            public virtual string Name
+            {
+                get {return name;}
+            }
+
+            // Define Level property.
+            // This is a read-only attribute.
+
+            public virtual string Level
+            {
+                get {return level;}
+            }
+
+            // Define Reviewed property.
+            // This is a read/write attribute.
+
+            public virtual bool Reviewed
+            {
+                get {return reviewed;}
+                set {reviewed = value;}
+            }
+        }
+
+        [Fact]
+        public void CanAddAttributesToType()
+        {
+            throw new NotImplementedException();
+
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(TestClass), new TypeToTypeWrapperOptions()
+            {
+                TypeAttributesGenerator = (options, type) =>
+                {
+                    var typeAttributes = new List<Attribute> { new DisplayNameAttribute("Hello There") };
+
+                    return typeAttributes;
+                }
+            });
+
+            Assert.Single(result.GetCustomAttributes(typeof(DisplayNameAttribute), true));
+        }
+
+        [Fact]
+        public void CanAddAttributesToMethod()
+        {
+            throw new NotImplementedException();
+
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(TestClass),
+                new TypeToTypeWrapperOptions()
+                {
+                    AdditionalReferences = new List<Assembly>() { typeof(JsonConverter).Assembly },
+                    OnConstructorCustomCodeGenerator = (options, type) => "var arr = new Newtonsoft.Json.Linq.JArray();"
+                });
+        }
+
+        [Fact]
+        public void CanAddAttributesToConstructor()
+        {
+            throw new NotImplementedException();
+
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(TestClass),
+                new TypeToTypeWrapperOptions()
+                {
+                    AdditionalReferences = new List<Assembly>() { typeof(JsonConverter).Assembly },
+                    OnConstructorCustomCodeGenerator = (options, type) => "var arr = new Newtonsoft.Json.Linq.JArray();"
+                });
+        }
+
+        [Fact]
+        public void CanAddOpenGenericConstructorParameter()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(TestClass),
+                new TypeToTypeWrapperOptions()
+                {
+                    AdditionalConstructorParameters = new List<AdditionalParameter>() { new AdditionalParameter(typeof(List<>), "myGenericParam") }
+                });
+
+            var constructor = result.GetConstructor(new[] { typeof(List<>).MakeGenericType(result) });
+
+            Assert.NotNull(constructor);
         }
     }
 }

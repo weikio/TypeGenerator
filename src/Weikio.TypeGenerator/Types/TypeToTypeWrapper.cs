@@ -5,6 +5,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Weikio.TypeGenerator.Delegates;
 
 namespace Weikio.TypeGenerator.Types
@@ -48,14 +51,14 @@ namespace Weikio.TypeGenerator.Types
             var id = TypeCache.Add(originalType, options);
 
             var generator = new CodeToAssemblyGenerator();
-            AddReferences(generator, allTypes);
+            AddReferences(generator, allTypes, options, originalType);
 
             var code = new StringBuilder();
             AddNamespaces(code, allTypes);
 
             var constructorParameterNames = new List<string>();
             var constructorParameterNamesWithTypes = new List<string>();
-            var constructorFielsNamesWithTypes = new List<string>();
+            var constructorFieldNamesWithTypes = new List<string>();
             var propertyNamesWithTypes = new List<string>();
 
             var conversionRules = options?.ConversionRules;
@@ -74,10 +77,19 @@ namespace Weikio.TypeGenerator.Types
                 var methodParameterNamesWithTypes = new List<string>();
                 var delegateMethodParameters = new List<string>();
 
-                DoConversions(parameters, conversionRules, constructorParameterNames, constructorParameterNamesWithTypes, constructorFielsNamesWithTypes,
-                    propertyNamesWithTypes, delegateMethodParameters, methodParameterNamesWithTypes);
+                DoConversions(parameters, conversionRules, constructorParameterNames, constructorParameterNamesWithTypes, constructorFieldNamesWithTypes,
+                    propertyNamesWithTypes, delegateMethodParameters, methodParameterNamesWithTypes, options, originalType);
 
                 d.Add(methodInfo, (delegateMethodParameters, methodParameterNamesWithTypes));
+            }
+
+            if (options.AdditionalConstructorParameters?.Any() == true)
+            {
+                foreach (var additionalConstructorParameter in options.AdditionalConstructorParameters)
+                {
+                    AddConstructorParameter(additionalConstructorParameter, constructorParameterNames, constructorParameterNamesWithTypes,
+                        constructorFieldNamesWithTypes, options, originalType);
+                }
             }
 
             code.AppendLine();
@@ -87,7 +99,7 @@ namespace Weikio.TypeGenerator.Types
             code.AppendLine("{");
 
             CreateInstance(originalType, code, id);
-            CreateConstructor(options, constructorParameterNames, constructorFielsNamesWithTypes, code, constructorParameterNamesWithTypes, originalType, id);
+            CreateConstructor(options, constructorParameterNames, constructorFieldNamesWithTypes, code, constructorParameterNamesWithTypes, originalType, id);
             CreateProperties(propertyNamesWithTypes, code);
 
             foreach (var methodInfo in methods)
@@ -106,15 +118,42 @@ namespace Weikio.TypeGenerator.Types
                 code.AppendLine("// Custom code ends");
             }
 
+            if (options.IsSourceCodeIncluded)
+            {
+                code.AppendLine("##sourceplaceholder##");
+            }
+
             code.AppendLine("}"); // Close class
             code.AppendLine("}"); // Close namespace
 
-            var s = code.ToString();
-            var assembly = generator.GenerateAssembly(s);
+            var fullCode = code.ToString();
+
+            if (options.IsSourceCodePrettified)
+            {
+                fullCode = CSharpSyntaxTree.ParseText(fullCode).GetRoot().NormalizeWhitespace().ToFullString();
+            }
+            
+            if (options.IsSourceCodeIncluded)
+            {
+                code.AppendLine("// Source code begins");
+                fullCode = fullCode.Replace("##sourceplaceholder##", $"private string _source = @\"{Environment.NewLine}{fullCode.Replace("\"", "\"\"").Replace("##sourceplaceholder##", "")}\";");
+                code.AppendLine("// Source code ends");
+            }
+
+            var assembly = generator.GenerateAssembly(fullCode);
 
             var result = assembly.GetExportedTypes().Single();
 
             return result;
+        }
+
+        private void AddConstructorParameter(AdditionalParameter additionalConstructorParameter, List<string> constructorParameterNames, List<string> constructorParameterNamesWithTypes, List<string> constructorFieldNamesWithTypes, TypeToTypeWrapperOptions options, Type originalType)
+        {
+            constructorParameterNames.Add(additionalConstructorParameter.Name);
+            constructorParameterNamesWithTypes.Add($"{GetFriendlyName(additionalConstructorParameter.Type, GetTypeName(options, originalType))} {additionalConstructorParameter.Name}");
+
+            var fieldName = $"_{additionalConstructorParameter.Name}";
+            constructorFieldNamesWithTypes.Add($"{GetFriendlyName(additionalConstructorParameter.Type, GetTypeName(options, originalType))} {fieldName}");
         }
 
         private List<MethodInfo> GetMethodsToWrap(Type originalType, TypeToTypeWrapperOptions options)
@@ -172,7 +211,7 @@ namespace Weikio.TypeGenerator.Types
             if (typeof(void) != returnType)
             {
                 code.AppendLine(
-                    $"public {GetFriendlyName(returnType)} {generatedMethodName} ({string.Join(", ", methodParameterNamesWithTypes)})");
+                    $"public {GetFriendlyName(returnType, GetTypeName(options, originalType))} {generatedMethodName} ({string.Join(", ", methodParameterNamesWithTypes)})");
             }
             else
             {
@@ -200,7 +239,7 @@ namespace Weikio.TypeGenerator.Types
             if (typeof(void) != returnType)
             {
                 code.AppendLine(
-                    $"var result = ({GetFriendlyName(returnType)}) _instance.{originalMethodName}({string.Join(", ", delegateMethodParameters)});");
+                    $"var result = ({GetFriendlyName(returnType, GetTypeName(options, originalType))}) _instance.{originalMethodName}({string.Join(", ", delegateMethodParameters)});");
             }
             else
             {
@@ -332,7 +371,7 @@ namespace Weikio.TypeGenerator.Types
             List<string> constructorFieldNamesWithTypes,
             List<string> propertyNamesWithTypes,
             List<string> delegateMethodParameters,
-            List<string> methodParameterNamesWithTypes)
+            List<string> methodParameterNamesWithTypes, TypeToTypeWrapperOptions options, Type originalType)
         {
             for (var index = 0; index < parameters.Length; index++)
             {
@@ -360,10 +399,10 @@ namespace Weikio.TypeGenerator.Types
                         if (conversionResult.ToConstructor)
                         {
                             constructorParameterNames.Add(parameterName);
-                            constructorParameterNamesWithTypes.Add($"{GetFriendlyName(parameterType)} {parameterName}");
+                            constructorParameterNamesWithTypes.Add($"{GetFriendlyName(parameterType, GetTypeName(options, originalType))} {parameterName}");
 
                             var fieldName = $"_{parameterName}";
-                            constructorFieldNamesWithTypes.Add($"{GetFriendlyName(parameterType)} {fieldName}");
+                            constructorFieldNamesWithTypes.Add($"{GetFriendlyName(parameterType, GetTypeName(options, originalType))} {fieldName}");
                             delegateMethodParameters.Add(fieldName);
 
                             handled = true;
@@ -380,7 +419,7 @@ namespace Weikio.TypeGenerator.Types
                                 propertyName = $"{propertyName}Prop";
                             }
 
-                            propertyNamesWithTypes.Add($"{GetFriendlyName(parameterType)} {propertyName}");
+                            propertyNamesWithTypes.Add($"{GetFriendlyName(parameterType, GetTypeName(options, originalType))} {propertyName}");
                             delegateMethodParameters.Add(propertyName);
 
                             handled = true;
@@ -388,7 +427,7 @@ namespace Weikio.TypeGenerator.Types
                             break;
                         }
 
-                        methodParameterNamesWithTypes.Add($"{GetFriendlyName(parameterType)} {parameterName}");
+                        methodParameterNamesWithTypes.Add($"{GetFriendlyName(parameterType, GetTypeName(options, originalType))} {parameterName}");
 
                         delegateMethodParameters.Add(parameterName);
 
@@ -403,7 +442,7 @@ namespace Weikio.TypeGenerator.Types
                     continue;
                 }
 
-                methodParameterNamesWithTypes.Add($"{GetFriendlyName(parameterType)} {parameterName}");
+                methodParameterNamesWithTypes.Add($"{GetFriendlyName(parameterType, GetTypeName(options, originalType))} {parameterName}");
                 delegateMethodParameters.Add(parameterName);
             }
         }
@@ -423,7 +462,7 @@ namespace Weikio.TypeGenerator.Types
             }
         }
 
-        private static void AddReferences(CodeToAssemblyGenerator generator, List<Type> allTypes)
+        private static void AddReferences(CodeToAssemblyGenerator generator, List<Type> allTypes, TypeToTypeWrapperOptions options, Type originalType)
         {
             generator.ReferenceAssemblyContainingType<Action>();
             generator.ReferenceAssemblyContainingType<DelegateCache>();
@@ -432,6 +471,24 @@ namespace Weikio.TypeGenerator.Types
             foreach (var allType in allTypes)
             {
                 generator.ReferenceAssembly(allType.Assembly);
+            }
+
+            if (options?.AdditionalReferences?.Any() == true)
+            {
+                foreach (var additionalReference in options.AdditionalReferences)
+                {
+                    generator.ReferenceAssembly(additionalReference);
+                }
+            }
+
+            if (options?.TypeAttributesGenerator != null)
+            {
+                var attrs = options.TypeAttributesGenerator(options, originalType);
+
+                foreach (var attribute in attrs)
+                {
+                    generator.ReferenceAssembly(attribute.GetType().Assembly);
+                }
             }
         }
 
@@ -506,10 +563,16 @@ namespace Weikio.TypeGenerator.Types
         /// <summary>
         ///     https://stackoverflow.com/a/26429045/66988
         /// </summary>
-        public static string GetFriendlyName(Type type)
+        public static string GetFriendlyName(Type type, string generatedTypeName)
         {
             var friendlyName = type.FullName;
 
+            if (string.IsNullOrWhiteSpace(friendlyName) && type.IsGenericParameter &&
+                string.Equals(type.Name, "T", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return generatedTypeName;
+            }
+            
             if (string.IsNullOrWhiteSpace(friendlyName))
             {
                 friendlyName = type.Name;
@@ -532,7 +595,7 @@ namespace Weikio.TypeGenerator.Types
 
             for (var i = 0; i < typeParameters.Length; ++i)
             {
-                var typeParamName = GetFriendlyName(typeParameters[i]);
+                var typeParamName = GetFriendlyName(typeParameters[i], generatedTypeName);
                 friendlyName += i == 0 ? typeParamName : "," + typeParamName;
             }
 

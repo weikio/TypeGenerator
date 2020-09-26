@@ -54,15 +54,33 @@ namespace Weikio.TypeGenerator.Types
         public Func<TypeToTypeWrapperOptions, Type, MethodInfo, string> MethodNameGenerator { get; set; } =
             (options, originalType, methodInfo) => methodInfo.Name;
 
+        public Func<TypeToTypeWrapperOptions, Type, List<Attribute>> TypeAttributesGenerator { get; set; } = null;
         public Func<TypeToTypeWrapperOptions, Type, string> TypeNameGenerator { get; set; } = (options, originalType) => options.TypeName;
         public Func<TypeToTypeWrapperOptions, Type, string> NamespaceNameGenerator { get; set; } = (options, originalType) => options.NamespaceName;
         public Func<TypeToTypeWrapperOptions, Type, object> Factory { get; set; } = (options, originalType) => Activator.CreateInstance(originalType);
         public Action<TypeToTypeWrapperOptions, Type, object> OnConstructor { get; set; } = null;
-        public Func<TypeToTypeWrapperOptions, Type, string> OnConstructorCustomCodeGenerator { get; set; } = (options, originalType) => "";
+        public Func<TypeToTypeWrapperOptions, Type, string> OnConstructorCustomCodeGenerator { get; set; } = null;
         public Action<TypeToTypeWrapperOptions, Type, object, MethodInfo> OnBeforeMethod { get; set; } = null;
-        public Func<TypeToTypeWrapperOptions, Type, MethodInfo, string> OnBeforeMethodCustomCodeGenerator { get; set; } = (options, originalType, methodInfo) => "";
+        public Func<TypeToTypeWrapperOptions, Type, MethodInfo, string> OnBeforeMethodCustomCodeGenerator { get; set; } = null;
         public Action<TypeToTypeWrapperOptions, Type, object, MethodInfo> OnAfterMethod { get; set; } = null;
-        public Func<TypeToTypeWrapperOptions, Type, MethodInfo, string> OnAfterMethodCustomCodeGenerator { get; set; } = (options, originalType, methodInfo) => "";
-        public Func<TypeToTypeWrapperOptions, Type, string> CustomCodeGenerator { get; set; } = (options, originalType) => "";
+        public Func<TypeToTypeWrapperOptions, Type, MethodInfo, string> OnAfterMethodCustomCodeGenerator { get; set; } = null;
+        public Func<TypeToTypeWrapperOptions, Type, string> CustomCodeGenerator { get; set; } = null;
+        public List<AdditionalParameter> AdditionalConstructorParameters { get; set; } = new List<AdditionalParameter>();
+        public List<string> AdditionalNamespaces { get; set; } = new List<string>();
+        public List<Assembly> AdditionalReferences { get; set; } = new List<Assembly>();
+        public bool IsSourceCodeIncluded { get; set; } = true;
+        public bool IsSourceCodePrettified { get; set; } = true;
+    }
+
+    public class AdditionalParameter
+    {
+        public Type Type { get; set; }
+        public string Name { get; set; }
+
+        public AdditionalParameter(Type type, string name)
+        {
+            Type = type;
+            Name = name;
+        }
     }
 }
