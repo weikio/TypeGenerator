@@ -419,6 +419,7 @@ namespace Weikio.TypeGenerator.Tests
             }
         }
 
+        #if DEBUG
         [Fact]
         public void CanAddAttributesToType()
         {
@@ -468,6 +469,8 @@ namespace Weikio.TypeGenerator.Tests
                     OnConstructorCustomCodeGenerator = (options, type) => "var arr = new Newtonsoft.Json.Linq.JArray();"
                 });
         }
+        
+        #endif
 
         [Fact]
         public void CanAddOpenGenericConstructorParameter()
