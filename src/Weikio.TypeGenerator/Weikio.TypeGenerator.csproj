@@ -7,13 +7,14 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <Description>Type Generator for .NET Standard can generate types from delegates and delegating types for existing .NET types.</Description>
-    <PackageDescription>Type Generator for .NET Standard can generate types from delegates and delegating types for existing .NET types.</PackageDescription>
+    <Description>Type Generator for .NET Standard can generate types runtime from delegates and existing types.</Description>
+    <PackageDescription>Type Generator for .NET Standard can generate types runtime from delegates and existing types.</PackageDescription>
     <PackageId>Weikio.TypeGenerator</PackageId>
     <Product>Weikio.TypeGenerator</Product>
     <PackageTags>type;assembly;dynamic;runtime;generation;wrapping;roslyn</PackageTags>
     <Title>Weikio.TypeGenerator</Title>
     <RepositoryUrl>https://github.com/weikio/Weikio.TypeGenerator</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/weikio/Weikio.TypeGenerator</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
