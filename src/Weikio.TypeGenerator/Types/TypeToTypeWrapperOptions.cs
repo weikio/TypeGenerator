@@ -11,6 +11,8 @@ namespace Weikio.TypeGenerator.Types
         public string NamespaceName { get; set; } = "GeneratedNamespace";
         public List<string> IncludedMethods { get; set; } = new List<string>();
 
+        public Func<TypeToTypeWrapperOptions, Type, MethodInfo, bool> ExcludeMethod { get; set; } = (options, originalType, method) => false;
+            
         public Func<TypeToTypeWrapperOptions, Type, MethodInfo, bool> IncludeMethod { get; set; } = (options, originalType, method) =>
         {
             if (method.IsAbstract)

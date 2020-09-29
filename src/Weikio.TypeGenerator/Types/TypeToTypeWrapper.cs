@@ -189,6 +189,11 @@ namespace Weikio.TypeGenerator.Types
                     continue;
                 }
 
+                if (options.ExcludeMethod(options, originalType, methodInfo))
+                {
+                    continue;
+                }
+
                 if (options.IncludedMethods?.Any() != true)
                 {
                     result.Add(methodInfo);

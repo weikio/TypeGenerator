@@ -487,5 +487,33 @@ namespace Weikio.TypeGenerator.Tests
 
             Assert.NotNull(constructor);
         }
+        
+        [Fact]
+        public void CanExcludeMethods()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(TestClass),
+                new TypeToTypeWrapperOptions()
+                {
+                    ExcludeMethod = (options, type, mi) =>
+                    {
+                        var hasOveloads = type.GetMethods().Count(x => string.Equals(x.Name, mi.Name)) > 1;
+
+                        if (hasOveloads == false)
+                        {
+                            return true;
+                        }
+                        
+                        var parameters = mi.GetParameters();
+
+                        return parameters.Length == 0;
+                    }
+                });
+
+            var addCountMethods = result.GetMethods().Where(x => x.Name == nameof(TestClass.AddCount));
+
+            Assert.Single(addCountMethods);
+        }
     }
 }
