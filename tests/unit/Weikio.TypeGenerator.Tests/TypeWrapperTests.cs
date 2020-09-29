@@ -376,50 +376,50 @@ namespace Weikio.TypeGenerator.Tests
                 });
         }
 
-        [AttributeUsage(AttributeTargets.All)]
-        public class DeveloperAttribute : Attribute
+        [Fact]
+        public void CanInherit()
         {
-            // Private fields.
-            private string name;
-            private string level;
-            private bool reviewed;
+            var wrapper = new TypeToTypeWrapper();
 
-            // This constructor defines two required parameters: name and level.
+            var result = wrapper.CreateType(typeof(TestClass),
+                new TypeToTypeWrapperOptions() { Inherits = typeof(CustomBaseClass) });
 
-            public DeveloperAttribute(string name, string level)
-            {
-                this.name = name;
-                this.level = level;
-                reviewed = false;
-            }
-
-            // Define Name property.
-            // This is a read-only attribute.
-
-            public virtual string Name
-            {
-                get {return name;}
-            }
-
-            // Define Level property.
-            // This is a read-only attribute.
-
-            public virtual string Level
-            {
-                get {return level;}
-            }
-
-            // Define Reviewed property.
-            // This is a read/write attribute.
-
-            public virtual bool Reviewed
-            {
-                get {return reviewed;}
-                set {reviewed = value;}
-            }
+            var inherits = typeof(CustomBaseClass).IsAssignableFrom(result);
+            Assert.True(inherits);
         }
 
-        #if DEBUG
+        [Fact]
+        public void CanImplement()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(TestClass),
+                new TypeToTypeWrapperOptions() { Implements = new List<Type>() { typeof(ITestInterface1), typeof(ITestInterface2) } });
+
+            var implements1 = typeof(ITestInterface1).IsAssignableFrom(result);
+            Assert.True(implements1);
+            var implements2 = typeof(ITestInterface2).IsAssignableFrom(result);
+            Assert.True(implements2);
+        }
+
+        [Fact]
+        public void CanInheritAndImplement()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(TestClass),
+                new TypeToTypeWrapperOptions()
+                {
+                    Inherits = typeof(TestClass), Implements = new List<Type>() { typeof(ITestInterface1), typeof(ITestInterface2) }
+                });
+
+            var implements1 = typeof(ITestInterface1).IsAssignableFrom(result);
+            Assert.True(implements1);
+            var implements2 = typeof(ITestInterface2).IsAssignableFrom(result);
+            Assert.True(implements2);
+        }
+
+#if DEBUG
         [Fact]
         public void CanAddAttributesToType()
         {
@@ -469,8 +469,8 @@ namespace Weikio.TypeGenerator.Tests
                     OnConstructorCustomCodeGenerator = (options, type) => "var arr = new Newtonsoft.Json.Linq.JArray();"
                 });
         }
-        
-        #endif
+
+#endif
 
         [Fact]
         public void CanAddOpenGenericConstructorParameter()

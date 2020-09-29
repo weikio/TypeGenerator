@@ -41,4 +41,20 @@ namespace Weikio.TypeGenerator.Tests
             return Counter;
         }
     }
+
+    public class CustomBaseClass
+    {
+        public string DoWork()
+        {
+            return "Hello from base class";
+        }
+    }
+
+    public interface ITestInterface1
+    {
+    }
+
+    public interface ITestInterface2
+    {
+    }
 }

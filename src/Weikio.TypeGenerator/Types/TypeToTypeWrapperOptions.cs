@@ -70,6 +70,8 @@ namespace Weikio.TypeGenerator.Types
         public List<Assembly> AdditionalReferences { get; set; } = new List<Assembly>();
         public bool IsSourceCodeIncluded { get; set; } = true;
         public bool IsSourceCodePrettified { get; set; } = true;
+        public Type Inherits { get; set; } = null;
+        public List<Type> Implements { get; set; } = null;
     }
 
     public class AdditionalParameter

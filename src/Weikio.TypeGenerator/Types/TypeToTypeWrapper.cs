@@ -95,7 +95,27 @@ namespace Weikio.TypeGenerator.Types
             code.AppendLine();
             code.AppendLine($"namespace {GetNamespace(options, originalType)}");
             code.AppendLine("{");
-            code.AppendLine($"public class {GetTypeName(options, originalType)}");
+            
+
+            var inheritedAndImplementedTypes = new List<Type>();
+
+            if (options.Inherits != null)
+            {
+                inheritedAndImplementedTypes.Add(options.Inherits);
+            }
+            if (options.Implements != null)
+            {
+                inheritedAndImplementedTypes.AddRange(options.Implements);
+            }
+            
+            var inheritance = "";
+
+            if (inheritedAndImplementedTypes.Any())
+            {
+                inheritance = $" : {string.Join(", ", inheritedAndImplementedTypes.Select(x => x.FullName))}";
+            }
+
+            code.AppendLine($"public class {GetTypeName(options, originalType)} {inheritance}");
             code.AppendLine("{");
 
             CreateInstance(originalType, code, id);
@@ -489,6 +509,11 @@ namespace Weikio.TypeGenerator.Types
                 {
                     generator.ReferenceAssembly(attribute.GetType().Assembly);
                 }
+            }
+
+            if (options?.Inherits != null)
+            {
+                generator.ReferenceAssembly(options.Inherits.Assembly);
             }
         }
 
