@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -106,6 +107,27 @@ namespace Weikio.TypeGenerator.Tests
             var type = secondAssembly.GetExportedTypes().Single();
 
             Assert.Equal("AnotherClass", type.Name);
+        }
+
+        [Fact]
+        public void AssemblyNameShouldntContainExtension()
+        {
+            var code = @"public class MyClass
+                   {
+                       public void RunThings()
+                       {
+                           var y = 0;
+                           var a = 1;
+           
+                           a = y + 10;
+                       }
+                   }";
+
+            var result = _generator.GenerateAssembly(code);
+            var assemblyName = result.GetName().Name;
+
+            var trimmedAssemblyName = Path.GetFileNameWithoutExtension(assemblyName);
+            Assert.Equal(assemblyName, trimmedAssemblyName);
         }
     }
 }

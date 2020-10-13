@@ -104,7 +104,7 @@ namespace Weikio.TypeGenerator
 
         public Assembly GenerateAssembly(string code)
         {
-            var assemblyName = AssemblyName ?? Path.GetFileNameWithoutExtension(Path.GetRandomFileName()) + ".dll";
+            var assemblyName = AssemblyName ?? Path.GetFileNameWithoutExtension(Path.GetRandomFileName());
             var text = CSharpSyntaxTree.ParseText(code);
             var array = _references.ToArray();
             var syntaxTreeArray = new SyntaxTree[1] { text };
