@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -313,6 +314,24 @@ namespace Weikio.TypeGenerator.Tests
 
             var res = obj.Run('g');
             Assert.True(res);
+        }
+
+        [Fact]
+        public void DelegatesAssemblyContainsVersionInfo()
+        {
+            var converter = new DelegateToTypeWrapper();
+
+            var result = converter.CreateType(new Func<int, Task<bool>>(async i =>
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(100));
+                _testOutputHelper.WriteLine("Hello from test");
+
+                return true;
+            }));
+            
+            var versionInfo = FileVersionInfo.GetVersionInfo(result.Assembly.Location);
+            var fileVersion = versionInfo.FileVersion;
+            Assert.NotNull(fileVersion);
         }
     }
 }

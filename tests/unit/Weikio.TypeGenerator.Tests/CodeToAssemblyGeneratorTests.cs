@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Text;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -128,6 +130,26 @@ namespace Weikio.TypeGenerator.Tests
 
             var trimmedAssemblyName = Path.GetFileNameWithoutExtension(assemblyName);
             Assert.Equal(assemblyName, trimmedAssemblyName);
+        }
+        
+        [Fact]
+        public void AssemblyShouldContainVersionInfo()
+        {
+            var code = @"public class MyClass
+                   {
+                       public void RunThings()
+                       {
+                           var y = 0;
+                           var a = 1;
+           
+                           a = y + 10;
+                       }
+                   }";
+
+            var result = _generator.GenerateAssembly(code);
+            var versionInfo = FileVersionInfo.GetVersionInfo(result.Location);
+            var fileVersion = versionInfo.FileVersion;
+            Assert.NotNull(fileVersion);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
@@ -514,6 +515,18 @@ namespace Weikio.TypeGenerator.Tests
             var addCountMethods = result.GetMethods().Where(x => x.Name == nameof(TestClass.AddCount));
 
             Assert.Single(addCountMethods);
+        }
+        
+        [Fact]
+        public void WrappedTypesAssemblyContainsVersion()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(TestClass));
+            
+            var versionInfo = FileVersionInfo.GetVersionInfo(result.Assembly.Location);
+            var fileVersion = versionInfo.FileVersion;
+            Assert.NotNull(fileVersion);
         }
     }
 }

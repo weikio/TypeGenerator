@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Emit;
 
 namespace Weikio.TypeGenerator
 {
@@ -18,7 +19,7 @@ namespace Weikio.TypeGenerator
         private readonly IList<MetadataReference> _references = new List<MetadataReference>();
         private readonly string _workingFolder;
         private readonly bool _persist;
-        
+
         public CodeToAssemblyGenerator(bool persist = true, string workingFolder = default, List<Assembly> assemblies = null)
         {
             var entryAssembly = Assembly.GetEntryAssembly();
@@ -29,7 +30,7 @@ namespace Weikio.TypeGenerator
             {
                 workingFolder = Path.Combine(Path.GetTempPath(), "Weikio.TypeGenerator", name, version);
             }
-            
+
             _workingFolder = workingFolder;
 
             _persist = persist;
@@ -41,7 +42,7 @@ namespace Weikio.TypeGenerator
                     ReferenceAssembly(assembly);
                 }
             }
-            
+
             ReferenceAssemblyContainingType<object>();
             ReferenceAssembly(typeof(Enumerable).GetTypeInfo().Assembly);
         }
@@ -115,57 +116,72 @@ namespace Weikio.TypeGenerator
             }
 
             var fullPath = Path.Combine(_workingFolder, assemblyName);
+            var assemblyPaths = _assemblies.Where(x => !string.IsNullOrWhiteSpace(x.Location)).Select(x => x).ToList();
+            var loadContext = new CustomAssemblyLoadContext(assemblyPaths);
             
-            using (var memoryStream = new MemoryStream())
+            var compilation = CSharpCompilation
+                .Create(assemblyName, syntaxTreeArray, array,
+                    new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, false, null,
+                        null, null, null, OptimizationLevel.Debug, false,
+                        false, null, null, new ImmutableArray<byte>(), new bool?()));
+
+            if (!_persist)
             {
-                var emitResult = CSharpCompilation
-                    .Create(assemblyName, syntaxTreeArray, array,
-                        new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, false, null,
-                            null, null, null, OptimizationLevel.Debug, false,
-                            false, null, null, new ImmutableArray<byte>(), new bool?())).Emit(memoryStream);
-
-                if (!emitResult.Success)
+                using (var memoryStream = new MemoryStream())
                 {
-                    var errors = emitResult.Diagnostics
-                        .Where(diagnostic =>
-                            diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error);
+                    var emitResult = compilation.Emit(memoryStream);
 
-                    var errorsMsg = string.Join("\n", errors.Select(x => x.Id + ": " + x.GetMessage()));
-
-                    var errorMsgWithCode = "Compilation failures!" + Environment.NewLine + Environment.NewLine +
-                                           errorsMsg + Environment.NewLine + Environment.NewLine + "Code:" +
-                                           Environment.NewLine + Environment.NewLine + code;
-
-                    throw new InvalidOperationException(errorMsgWithCode);
-                }
-
-                memoryStream.Seek(0L, SeekOrigin.Begin);
-
-                var assemblyPaths = _assemblies.Where(x => !string.IsNullOrWhiteSpace(x.Location)).Select(x => x).ToList();
-                var loadContext = new CustomAssemblyLoadContext(assemblyPaths);
-
-                if (_persist)
-                {
-                    using (var file = new FileStream(fullPath, FileMode.Create, System.IO.FileAccess.Write))
+                    if (!emitResult.Success)
                     {
-                        var bytes = new byte[memoryStream.Length];
-                        memoryStream.Read(bytes, 0, (int) memoryStream.Length);
-                        file.Write(bytes, 0, bytes.Length);
-
-                        memoryStream.Close();
+                        ThrowError(code, emitResult);
                     }
 
-                    var assembly = loadContext.LoadFromAssemblyPath(fullPath);
-
-                    return assembly;
-                }
-                else
-                {
+                    memoryStream.Seek(0L, SeekOrigin.Begin);
                     var assembly = loadContext.LoadFromStream(memoryStream);
 
                     return assembly;
                 }
             }
+            
+            using (var dllStream = new MemoryStream())
+            using (var pdbStream = new MemoryStream())
+            using (var win32resStream = compilation.CreateDefaultWin32Resources(
+                true,
+                false,
+                null,
+                null))
+            {
+                var emitResult = compilation.Emit(
+                    dllStream,
+                    pdbStream,
+                    win32Resources: win32resStream);
+
+                if (!emitResult.Success)
+                {
+                    ThrowError(code, emitResult);
+                }
+                
+                File.WriteAllBytes(fullPath, dllStream.ToArray());
+                
+                var assembly = loadContext.LoadFromAssemblyPath(fullPath);
+
+                return assembly;
+            }
+        }
+
+        private static void ThrowError(string code, EmitResult emitResult)
+        {
+            var errors = emitResult.Diagnostics
+                .Where(diagnostic =>
+                    diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error);
+
+            var errorsMsg = string.Join("\n", errors.Select(x => x.Id + ": " + x.GetMessage()));
+
+            var errorMsgWithCode = "Compilation failures!" + Environment.NewLine + Environment.NewLine +
+                                   errorsMsg + Environment.NewLine + Environment.NewLine + "Code:" +
+                                   Environment.NewLine + Environment.NewLine + code;
+
+            throw new InvalidOperationException(errorMsgWithCode);
         }
     }
 }
