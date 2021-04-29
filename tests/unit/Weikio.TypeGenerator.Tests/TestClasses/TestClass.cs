@@ -5,7 +5,7 @@ namespace Weikio.TypeGenerator.Tests
     public class TestClass
     {
         public int Counter { get; set; }
-        
+
         public void Run()
         {
             Console.WriteLine("Hello world");
@@ -20,7 +20,7 @@ namespace Weikio.TypeGenerator.Tests
 
             return "Hello " + i;
         }
-        
+
         public string SometimesHidden(string y)
         {
             return y;
@@ -30,7 +30,7 @@ namespace Weikio.TypeGenerator.Tests
         {
             Counter += 1;
         }
-        
+
         public void AddCount(int i)
         {
             Counter += i;
@@ -56,5 +56,46 @@ namespace Weikio.TypeGenerator.Tests
 
     public interface ITestInterface2
     {
+    }
+
+    public class Product
+    {
+        public string Name
+        {
+            get;
+            set;
+        }
+
+        public int Id { get; set; }
+        public string Description { get; set; }
+    }
+
+    public class ProductWithGetOnlyProperty
+    {
+        public string Name
+        {
+            get;
+        }
+
+        public int Id { get; set; }
+        public string Description { get; set; }
+    }
+
+    public class ProductWithPrivateProperty
+    {
+        private string Name { get; set; }
+
+        public int Id { get; set; }
+        public string Description { get; set; }
+    }
+
+    public abstract class Entity
+    {
+        public Guid Id { get; set; }
+    }
+
+    public class EntityImpl : Entity
+    {
+        public string Name { get; set; }
     }
 }

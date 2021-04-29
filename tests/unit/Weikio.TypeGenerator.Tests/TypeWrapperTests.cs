@@ -488,6 +488,86 @@ namespace Weikio.TypeGenerator.Tests
 
             Assert.NotNull(constructor);
         }
+
+        [Fact]
+        public void CanIncludeAllProperties()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(Product), new TypeToTypeWrapperOptions() { IncludedProperties = new List<string>() { "*" } });
+
+            var properties = result.GetProperties();
+
+            Assert.Equal(3, properties.Length);
+        }
+        
+        [Fact]
+        public void CanIncludeSomeProperties()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(Product), new TypeToTypeWrapperOptions()
+            {
+                IncludedProperties = new List<string>() { "Name", "Description" }
+            });
+
+            var properties = result.GetProperties();
+
+            Assert.Equal(2, properties.Length);
+        }
+
+        [Fact]
+        public void CanSetAndGetProperties()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(Product), new TypeToTypeWrapperOptions()
+            {
+                IncludedProperties = new List<string>() { "Name" }
+            });
+
+            dynamic wrappedProduct = Activator.CreateInstance(result);
+
+            wrappedProduct.Name = "Hello";
+            
+            Assert.Equal("Hello", wrappedProduct.Name);
+        }
+        
+        [Fact]
+        public void CanIncludeGetOnlyProperties()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(ProductWithGetOnlyProperty), new TypeToTypeWrapperOptions() { IncludedProperties = new List<string>() { "*" } });
+
+            var properties = result.GetProperties();
+
+            Assert.Equal(3, properties.Length);
+        }
+        
+        [Fact]
+        public void CanAutomaticallyHidePrivateProperty()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(ProductWithPrivateProperty), new TypeToTypeWrapperOptions() { IncludedProperties = new List<string>() { "*" } });
+
+            var properties = result.GetProperties();
+
+            Assert.Equal(2, properties.Length);
+        }
+        
+        [Fact]
+        public void DerivedPropertiesAreIncluded()
+        {
+            var wrapper = new TypeToTypeWrapper();
+
+            var result = wrapper.CreateType(typeof(EntityImpl), new TypeToTypeWrapperOptions() { IncludedProperties = new List<string>() { "*" } });
+
+            var properties = result.GetProperties();
+
+            Assert.Equal(2, properties.Length);
+        }
         
         [Fact]
         public void CanExcludeMethods()
@@ -505,7 +585,7 @@ namespace Weikio.TypeGenerator.Tests
                         {
                             return true;
                         }
-                        
+
                         var parameters = mi.GetParameters();
 
                         return parameters.Length == 0;
@@ -516,14 +596,14 @@ namespace Weikio.TypeGenerator.Tests
 
             Assert.Single(addCountMethods);
         }
-        
+
         [Fact]
         public void WrappedTypesAssemblyContainsVersion()
         {
             var wrapper = new TypeToTypeWrapper();
 
             var result = wrapper.CreateType(typeof(TestClass));
-            
+
             var versionInfo = FileVersionInfo.GetVersionInfo(result.Assembly.Location);
             var fileVersion = versionInfo.FileVersion;
             Assert.NotNull(fileVersion);
