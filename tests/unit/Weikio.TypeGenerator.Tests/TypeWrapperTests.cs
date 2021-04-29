@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -500,16 +501,14 @@ namespace Weikio.TypeGenerator.Tests
 
             Assert.Equal(3, properties.Length);
         }
-        
+
         [Fact]
         public void CanIncludeSomeProperties()
         {
             var wrapper = new TypeToTypeWrapper();
 
-            var result = wrapper.CreateType(typeof(Product), new TypeToTypeWrapperOptions()
-            {
-                IncludedProperties = new List<string>() { "Name", "Description" }
-            });
+            var result = wrapper.CreateType(typeof(Product),
+                new TypeToTypeWrapperOptions() { IncludedProperties = new List<string>() { "Name", "Description" } });
 
             var properties = result.GetProperties();
 
@@ -521,42 +520,41 @@ namespace Weikio.TypeGenerator.Tests
         {
             var wrapper = new TypeToTypeWrapper();
 
-            var result = wrapper.CreateType(typeof(Product), new TypeToTypeWrapperOptions()
-            {
-                IncludedProperties = new List<string>() { "Name" }
-            });
+            var result = wrapper.CreateType(typeof(Product), new TypeToTypeWrapperOptions() { IncludedProperties = new List<string>() { "Name" } });
 
             dynamic wrappedProduct = Activator.CreateInstance(result);
 
             wrappedProduct.Name = "Hello";
-            
+
             Assert.Equal("Hello", wrappedProduct.Name);
         }
-        
+
         [Fact]
         public void CanIncludeGetOnlyProperties()
         {
             var wrapper = new TypeToTypeWrapper();
 
-            var result = wrapper.CreateType(typeof(ProductWithGetOnlyProperty), new TypeToTypeWrapperOptions() { IncludedProperties = new List<string>() { "*" } });
+            var result = wrapper.CreateType(typeof(ProductWithGetOnlyProperty),
+                new TypeToTypeWrapperOptions() { IncludedProperties = new List<string>() { "*" } });
 
             var properties = result.GetProperties();
 
             Assert.Equal(3, properties.Length);
         }
-        
+
         [Fact]
         public void CanAutomaticallyHidePrivateProperty()
         {
             var wrapper = new TypeToTypeWrapper();
 
-            var result = wrapper.CreateType(typeof(ProductWithPrivateProperty), new TypeToTypeWrapperOptions() { IncludedProperties = new List<string>() { "*" } });
+            var result = wrapper.CreateType(typeof(ProductWithPrivateProperty),
+                new TypeToTypeWrapperOptions() { IncludedProperties = new List<string>() { "*" } });
 
             var properties = result.GetProperties();
 
             Assert.Equal(2, properties.Length);
         }
-        
+
         [Fact]
         public void DerivedPropertiesAreIncluded()
         {
@@ -568,7 +566,41 @@ namespace Weikio.TypeGenerator.Tests
 
             Assert.Equal(2, properties.Length);
         }
-        
+
+        [Fact]
+        public void CanWrapGeneratedType()
+        {
+            var code = @"namespace MyTest {
+                   public class MyClass
+                   {
+                       public void RunThings()
+                       {
+                           var y = 0;
+                           var a = 1;
+           
+                           a = y + 10;
+                       }
+                   }}";
+
+            var generator = new CodeToAssemblyGenerator();
+            var assembly = generator.GenerateAssembly(code);
+            
+            var type = assembly.GetExportedTypes().Single();
+            
+            var wrapper = new TypeToTypeWrapper();
+            
+            var result = wrapper.CreateType(type,
+                new TypeToTypeWrapperOptions()
+                {
+                    IncludedProperties = new List<string>() { "*" }, TypeName = "WrappedType", 
+                    AdditionalNamespaces = new List<string>() { type.Namespace },
+                    AssemblyGenerator = generator
+                });
+
+            dynamic inst = Activator.CreateInstance(result);
+            inst.RunThings();
+        }
+
         [Fact]
         public void CanExcludeMethods()
         {

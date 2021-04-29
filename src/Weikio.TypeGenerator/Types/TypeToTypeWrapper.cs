@@ -69,8 +69,7 @@ namespace Weikio.TypeGenerator.Types
 
             var id = TypeCache.Add(originalType, options);
 
-            var generator = new CodeToAssemblyGenerator();
-            AddReferences(generator, allTypes, options, originalType);
+            AddReferences(options.AssemblyGenerator, allTypes, options, originalType);
 
             var code = new StringBuilder();
             AddNamespaces(code, allTypes);
@@ -186,7 +185,7 @@ namespace Weikio.TypeGenerator.Types
                 code.AppendLine("// Source code ends");
             }
 
-            var assembly = generator.GenerateAssembly(fullCode);
+            var assembly = options.AssemblyGenerator.GenerateAssembly(fullCode);
 
             var result = assembly.GetExportedTypes().Single();
 

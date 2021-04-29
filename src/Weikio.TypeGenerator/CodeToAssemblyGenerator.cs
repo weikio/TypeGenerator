@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
@@ -19,8 +20,10 @@ namespace Weikio.TypeGenerator
         private readonly IList<MetadataReference> _references = new List<MetadataReference>();
         private readonly string _workingFolder;
         private readonly bool _persist;
+        private AssemblyLoadContext _assemblyLoadContext;
+        public AssemblyLoadContext LoadContext => _assemblyLoadContext;
 
-        public CodeToAssemblyGenerator(bool persist = true, string workingFolder = default, List<Assembly> assemblies = null)
+        public CodeToAssemblyGenerator(bool persist = true, string workingFolder = default, List<Assembly> assemblies = null, AssemblyLoadContext assemblyLoadContext = null)
         {
             var entryAssembly = Assembly.GetEntryAssembly();
             var name = entryAssembly?.GetName().Name ?? Guid.NewGuid().ToString();
@@ -32,6 +35,7 @@ namespace Weikio.TypeGenerator
             }
 
             _workingFolder = workingFolder;
+            _assemblyLoadContext = assemblyLoadContext;
 
             _persist = persist;
 
@@ -117,13 +121,17 @@ namespace Weikio.TypeGenerator
 
             var fullPath = Path.Combine(_workingFolder, assemblyName);
             var assemblyPaths = _assemblies.Where(x => !string.IsNullOrWhiteSpace(x.Location)).Select(x => x).ToList();
-            var loadContext = new CustomAssemblyLoadContext(assemblyPaths);
-            
+
             var compilation = CSharpCompilation
                 .Create(assemblyName, syntaxTreeArray, array,
                     new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, false, null,
                         null, null, null, OptimizationLevel.Debug, false,
                         false, null, null, new ImmutableArray<byte>(), new bool?()));
+
+            if (_assemblyLoadContext == null)
+            {
+                _assemblyLoadContext = new CustomAssemblyLoadContext(assemblyPaths);
+            }
 
             if (!_persist)
             {
@@ -137,7 +145,7 @@ namespace Weikio.TypeGenerator
                     }
 
                     memoryStream.Seek(0L, SeekOrigin.Begin);
-                    var assembly = loadContext.LoadFromStream(memoryStream);
+                    var assembly = LoadContext.LoadFromStream(memoryStream);
 
                     return assembly;
                 }
@@ -163,7 +171,7 @@ namespace Weikio.TypeGenerator
                 
                 File.WriteAllBytes(fullPath, dllStream.ToArray());
                 
-                var assembly = loadContext.LoadFromAssemblyPath(fullPath);
+                var assembly = _assemblyLoadContext.LoadFromAssemblyPath(fullPath);
 
                 return assembly;
             }

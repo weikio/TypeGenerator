@@ -75,6 +75,8 @@ namespace Weikio.TypeGenerator.Types
         public bool IsSourceCodePrettified { get; set; } = true;
         public Type Inherits { get; set; } = null;
         public List<Type> Implements { get; set; } = null;
+        
+        public CodeToAssemblyGenerator AssemblyGenerator { get; set; } = new CodeToAssemblyGenerator();
     }
 
     public class AdditionalParameter
