@@ -23,7 +23,11 @@ namespace Weikio.TypeGenerator
         private AssemblyLoadContext _assemblyLoadContext;
         public AssemblyLoadContext LoadContext => _assemblyLoadContext;
 
-        public CodeToAssemblyGenerator(bool persist = true, string workingFolder = default, List<Assembly> assemblies = null, AssemblyLoadContext assemblyLoadContext = null)
+        public CodeToAssemblyGenerator(bool persist = true, string workingFolder = default, List<Assembly> assemblies = null) : this(persist, workingFolder, assemblies, null)
+        {
+        }
+        
+        public CodeToAssemblyGenerator(bool persist, string workingFolder, List<Assembly> assemblies, AssemblyLoadContext assemblyLoadContext)
         {
             var entryAssembly = Assembly.GetEntryAssembly();
             var name = entryAssembly?.GetName().Name ?? Guid.NewGuid().ToString();
