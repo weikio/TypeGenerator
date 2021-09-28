@@ -22,6 +22,7 @@ namespace Weikio.TypeGenerator
         private readonly bool _persist;
         private AssemblyLoadContext _assemblyLoadContext;
         public AssemblyLoadContext LoadContext => _assemblyLoadContext;
+        public Action<LogLevelEnum, string, Exception> Log { get; set; } = Logger; 
 
         public CodeToAssemblyGenerator(bool persist = true, string workingFolder = default, List<Assembly> assemblies = null) : this(persist, workingFolder, assemblies, null)
         {
@@ -72,7 +73,7 @@ namespace Weikio.TypeGenerator
 
                 if (referencePath == null)
                 {
-                    Console.WriteLine("Could not make an assembly reference to " + assembly.FullName);
+                    Log(LogLevelEnum.Information, "Could not make an assembly reference to " + assembly.FullName, null);
                 }
                 else
                 {
@@ -82,17 +83,33 @@ namespace Weikio.TypeGenerator
                         return;
                     }
 
-                    _references.Add(MetadataReference.CreateFromFile(referencePath));
+                    var metadataReference = MetadataReference.CreateFromFile(referencePath);
+                    _references.Add(metadataReference);
 
                     foreach (var referencedAssembly in assembly.GetReferencedAssemblies())
                     {
-                        ReferenceAssembly(Assembly.Load(referencedAssembly));
+                        if (_assemblies.Any(x => x.GetName() == referencedAssembly))
+                        {
+                            continue;
+                        }
+                        
+                        Assembly loadedAssembly;
+                        if (_assemblyLoadContext != null)
+                        {
+                            loadedAssembly = _assemblyLoadContext.LoadFromAssemblyName(referencedAssembly);
+                        }
+                        else
+                        {
+                            loadedAssembly = Assembly.Load(referencedAssembly);
+                        }
+
+                        ReferenceAssembly(loadedAssembly);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Could not make an assembly reference to {assembly.FullName}\n\n{ex}");
+                Log(LogLevelEnum.Error, $"Could not make an assembly reference to {assembly.FullName}. Try to continue without the assembly.", ex);
             }
         }
 
@@ -123,18 +140,18 @@ namespace Weikio.TypeGenerator
                 Directory.CreateDirectory(_workingFolder);
             }
 
-            var fullPath = Path.Combine(_workingFolder, assemblyName);
-            var assemblyPaths = _assemblies.Where(x => !string.IsNullOrWhiteSpace(x.Location)).Select(x => x).ToList();
-
             var compilation = CSharpCompilation
                 .Create(assemblyName, syntaxTreeArray, array,
                     new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, false, null,
                         null, null, null, OptimizationLevel.Debug, false,
                         false, null, null, new ImmutableArray<byte>(), new bool?()));
 
+            var fullPath = Path.Combine(_workingFolder, assemblyName);
+            var assemblies = _assemblies.Where(x => !string.IsNullOrWhiteSpace(x.Location)).Select(x => x).ToList();
+
             if (_assemblyLoadContext == null)
             {
-                _assemblyLoadContext = new CustomAssemblyLoadContext(assemblyPaths);
+                _assemblyLoadContext = new CustomAssemblyLoadContext(assemblies);
             }
 
             if (!_persist)
@@ -194,6 +211,11 @@ namespace Weikio.TypeGenerator
                                    Environment.NewLine + Environment.NewLine + code;
 
             throw new InvalidOperationException(errorMsgWithCode);
+        }
+
+        private static void Logger(LogLevelEnum logLevel, string message, Exception exception = null)
+        {
+            Console.WriteLine($"{logLevel}: {message}{Environment.NewLine}{Environment.NewLine}Exception: {exception}");
         }
     }
 }
