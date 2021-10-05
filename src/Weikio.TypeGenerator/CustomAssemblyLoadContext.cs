@@ -6,9 +6,18 @@ namespace Weikio.TypeGenerator
 {
     public class CustomAssemblyLoadContext : AssemblyLoadContext
     {
-        private readonly List<Assembly> _assemblies;
+        private List<Assembly> _assemblies;
 
+        public CustomAssemblyLoadContext() 
+        {
+        }
+        
         public CustomAssemblyLoadContext(List<Assembly> assemblies) 
+        {
+            _assemblies = assemblies;
+        }
+
+        public void SetAssemblies(List<Assembly> assemblies)
         {
             _assemblies = assemblies;
         }

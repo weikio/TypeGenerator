@@ -1,7 +1,12 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
 using System.Text;
+using Microsoft.VisualStudio.TestPlatform.Common.Hosting;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -131,7 +136,7 @@ namespace Weikio.TypeGenerator.Tests
             var trimmedAssemblyName = Path.GetFileNameWithoutExtension(assemblyName);
             Assert.Equal(assemblyName, trimmedAssemblyName);
         }
-        
+
         [Fact]
         public void AssemblyShouldContainVersionInfo()
         {
@@ -150,6 +155,87 @@ namespace Weikio.TypeGenerator.Tests
             var versionInfo = FileVersionInfo.GetVersionInfo(result.Location);
             var fileVersion = versionInfo.FileVersion;
             Assert.NotNull(fileVersion);
+        }
+        
+        [Fact]
+        public void CanSetAssemblyContextFactory()
+        {
+            var myContext = new AssemblyContextForUnitTesting();
+            var generator = new CodeToAssemblyGenerator(true, null, null, () => myContext);
+
+            var code = @"public class MyClass
+                   {
+                       public void RunThings()
+                       {
+                           var y = 0;
+                           var a = 1;
+           
+                           a = y + 10;
+                       }
+                   }";
+
+            generator.GenerateAssembly(code);
+            Assert.True(myContext.HasLoaded);
+        }
+        
+        
+        public class AssemblyContextForUnitTesting : CustomAssemblyLoadContext
+        {
+            public bool HasLoaded { get; set; }
+
+            public AssemblyContextForUnitTesting()
+            {
+            }
+
+            public AssemblyContextForUnitTesting(List<Assembly> assemblies) : base(assemblies)
+            {
+            }
+
+            protected override Assembly Load(AssemblyName assemblyName)
+            {
+                HasLoaded = true;
+
+                return base.Load(assemblyName);
+            }
+        }
+
+        [Collection(nameof(NotThreadSafeResourceCollection))]
+        public class DefaultContextTests : IDisposable
+        {
+            private readonly ITestOutputHelper _testOutputHelper;
+            private CodeToAssemblyGenerator _generator;
+            private AssemblyContextForUnitTesting _myContext;
+
+            public DefaultContextTests(ITestOutputHelper testOutputHelper)
+            {
+                _myContext = new AssemblyContextForUnitTesting();
+                CodeToAssemblyGenerator.DefaultAssemblyLoadContextFactory = () => _myContext;
+                _testOutputHelper = testOutputHelper;
+                _generator = new CodeToAssemblyGenerator();
+            }
+
+            [Fact]
+            public void CanSetDefaultAssemblyContextFactory()
+            {
+                var code = @"public class MyClass
+                   {
+                       public void RunThings()
+                       {
+                           var y = 0;
+                           var a = 1;
+           
+                           a = y + 10;
+                       }
+                   }";
+
+                _generator.GenerateAssembly(code);
+                Assert.True(_myContext.HasLoaded);
+            }
+
+            public void Dispose()
+            {
+                CodeToAssemblyGenerator.DefaultAssemblyLoadContextFactory = () => new CustomAssemblyLoadContext();
+            }
         }
     }
 }

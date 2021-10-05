@@ -20,15 +20,22 @@ namespace Weikio.TypeGenerator
         private readonly IList<MetadataReference> _references = new List<MetadataReference>();
         private readonly string _workingFolder;
         private readonly bool _persist;
-        private AssemblyLoadContext _assemblyLoadContext;
+        private readonly AssemblyLoadContext _assemblyLoadContext;
         public AssemblyLoadContext LoadContext => _assemblyLoadContext;
-        public Action<LogLevelEnum, string, Exception> Log { get; set; } = Logger; 
+        public Action<LogLevelEnum, string, Exception> Log { get; set; } = Logger;
 
-        public CodeToAssemblyGenerator(bool persist = true, string workingFolder = default, List<Assembly> assemblies = null) : this(persist, workingFolder, assemblies, null)
+        public static Func<AssemblyLoadContext> DefaultAssemblyLoadContextFactory { get; set; } = () => new CustomAssemblyLoadContext(null);
+
+        public CodeToAssemblyGenerator(bool persist = true, string workingFolder = default, List<Assembly> assemblies = null) : this(persist, workingFolder,
+            assemblies, () => null)
+        {
+        }
+
+        public CodeToAssemblyGenerator(bool persist, string workingFolder, List<Assembly> assemblies, AssemblyLoadContext assemblyLoadContext) : this(persist, workingFolder, assemblies, () => assemblyLoadContext)
         {
         }
         
-        public CodeToAssemblyGenerator(bool persist, string workingFolder, List<Assembly> assemblies, AssemblyLoadContext assemblyLoadContext)
+        public CodeToAssemblyGenerator(bool persist, string workingFolder, List<Assembly> assemblies, Func<AssemblyLoadContext> assemblyLoadContextFactory)
         {
             var entryAssembly = Assembly.GetEntryAssembly();
             var name = entryAssembly?.GetName().Name ?? Guid.NewGuid().ToString();
@@ -40,7 +47,12 @@ namespace Weikio.TypeGenerator
             }
 
             _workingFolder = workingFolder;
-            _assemblyLoadContext = assemblyLoadContext;
+            _assemblyLoadContext = assemblyLoadContextFactory();
+
+            if (_assemblyLoadContext == null)
+            {
+                _assemblyLoadContext = DefaultAssemblyLoadContextFactory();
+            }
 
             _persist = persist;
 
@@ -92,16 +104,8 @@ namespace Weikio.TypeGenerator
                         {
                             continue;
                         }
-                        
-                        Assembly loadedAssembly;
-                        if (_assemblyLoadContext != null)
-                        {
-                            loadedAssembly = _assemblyLoadContext.LoadFromAssemblyName(referencedAssembly);
-                        }
-                        else
-                        {
-                            loadedAssembly = Assembly.Load(referencedAssembly);
-                        }
+
+                        var loadedAssembly = _assemblyLoadContext.LoadFromAssemblyName(referencedAssembly);
 
                         ReferenceAssembly(loadedAssembly);
                     }
@@ -149,9 +153,9 @@ namespace Weikio.TypeGenerator
             var fullPath = Path.Combine(_workingFolder, assemblyName);
             var assemblies = _assemblies.Where(x => !string.IsNullOrWhiteSpace(x.Location)).Select(x => x).ToList();
 
-            if (_assemblyLoadContext == null)
+            if (_assemblyLoadContext is CustomAssemblyLoadContext customAssemblyLoadContext)
             {
-                _assemblyLoadContext = new CustomAssemblyLoadContext(assemblies);
+                customAssemblyLoadContext.SetAssemblies(assemblies);
             }
 
             if (!_persist)
@@ -171,7 +175,7 @@ namespace Weikio.TypeGenerator
                     return assembly;
                 }
             }
-            
+
             using (var dllStream = new MemoryStream())
             using (var pdbStream = new MemoryStream())
             using (var win32resStream = compilation.CreateDefaultWin32Resources(
@@ -189,9 +193,9 @@ namespace Weikio.TypeGenerator
                 {
                     ThrowError(code, emitResult);
                 }
-                
+
                 File.WriteAllBytes(fullPath, dllStream.ToArray());
-                
+
                 var assembly = _assemblyLoadContext.LoadFromAssemblyPath(fullPath);
 
                 return assembly;
