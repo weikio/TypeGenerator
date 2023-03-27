@@ -150,7 +150,7 @@ namespace Weikio.TypeGenerator
                         null, null, null, OptimizationLevel.Debug, false,
                         false, null, null, new ImmutableArray<byte>(), new bool?()));
 
-            var fullPath = Path.Combine(_workingFolder, assemblyName);
+            var fullPath = Path.Combine(_workingFolder, GetWithDllExtension(assemblyName));
             var assemblies = _assemblies.Where(x => !string.IsNullOrWhiteSpace(x.Location)).Select(x => x).ToList();
 
             if (_assemblyLoadContext is CustomAssemblyLoadContext customAssemblyLoadContext)
@@ -201,6 +201,9 @@ namespace Weikio.TypeGenerator
                 return assembly;
             }
         }
+
+        private static string GetWithDllExtension(string input) => 
+            input.EndsWith(".dll") ? input : $"{input}.dll";
 
         private static void ThrowError(string code, EmitResult emitResult)
         {
