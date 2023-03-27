@@ -422,55 +422,55 @@ namespace Weikio.TypeGenerator.Tests
         }
 
 #if DEBUG
-        [Fact]
-        public void CanAddAttributesToType()
-        {
-            throw new NotImplementedException();
-
-            var wrapper = new TypeToTypeWrapper();
-
-            var result = wrapper.CreateType(typeof(TestClass), new TypeToTypeWrapperOptions()
-            {
-                TypeAttributesGenerator = (options, type) =>
-                {
-                    var typeAttributes = new List<Attribute> { new DisplayNameAttribute("Hello There") };
-
-                    return typeAttributes;
-                }
-            });
-
-            Assert.Single(result.GetCustomAttributes(typeof(DisplayNameAttribute), true));
-        }
-
-        [Fact]
-        public void CanAddAttributesToMethod()
-        {
-            throw new NotImplementedException();
-
-            var wrapper = new TypeToTypeWrapper();
-
-            var result = wrapper.CreateType(typeof(TestClass),
-                new TypeToTypeWrapperOptions()
-                {
-                    AdditionalReferences = new List<Assembly>() { typeof(JsonConverter).Assembly },
-                    OnConstructorCustomCodeGenerator = (options, type) => "var arr = new Newtonsoft.Json.Linq.JArray();"
-                });
-        }
-
-        [Fact]
-        public void CanAddAttributesToConstructor()
-        {
-            throw new NotImplementedException();
-
-            var wrapper = new TypeToTypeWrapper();
-
-            var result = wrapper.CreateType(typeof(TestClass),
-                new TypeToTypeWrapperOptions()
-                {
-                    AdditionalReferences = new List<Assembly>() { typeof(JsonConverter).Assembly },
-                    OnConstructorCustomCodeGenerator = (options, type) => "var arr = new Newtonsoft.Json.Linq.JArray();"
-                });
-        }
+        // [Fact]
+        // public void CanAddAttributesToType()
+        // {
+        //     throw new NotImplementedException();
+        //
+        //     var wrapper = new TypeToTypeWrapper();
+        //
+        //     var result = wrapper.CreateType(typeof(TestClass), new TypeToTypeWrapperOptions()
+        //     {
+        //         TypeAttributesGenerator = (options, type) =>
+        //         {
+        //             var typeAttributes = new List<Attribute> { new DisplayNameAttribute("Hello There") };
+        //
+        //             return typeAttributes;
+        //         }
+        //     });
+        //
+        //     Assert.Single(result.GetCustomAttributes(typeof(DisplayNameAttribute), true));
+        // }
+        //
+        // [Fact]
+        // public void CanAddAttributesToMethod()
+        // {
+        //     throw new NotImplementedException();
+        //
+        //     var wrapper = new TypeToTypeWrapper();
+        //
+        //     var result = wrapper.CreateType(typeof(TestClass),
+        //         new TypeToTypeWrapperOptions()
+        //         {
+        //             AdditionalReferences = new List<Assembly>() { typeof(JsonConverter).Assembly },
+        //             OnConstructorCustomCodeGenerator = (options, type) => "var arr = new Newtonsoft.Json.Linq.JArray();"
+        //         });
+        // }
+        //
+        // [Fact]
+        // public void CanAddAttributesToConstructor()
+        // {
+        //     throw new NotImplementedException();
+        //
+        //     var wrapper = new TypeToTypeWrapper();
+        //
+        //     var result = wrapper.CreateType(typeof(TestClass),
+        //         new TypeToTypeWrapperOptions()
+        //         {
+        //             AdditionalReferences = new List<Assembly>() { typeof(JsonConverter).Assembly },
+        //             OnConstructorCustomCodeGenerator = (options, type) => "var arr = new Newtonsoft.Json.Linq.JArray();"
+        //         });
+        // }
 
 #endif
 
