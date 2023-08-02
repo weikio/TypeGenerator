@@ -150,7 +150,7 @@ namespace Weikio.TypeGenerator
                         null, null, null, OptimizationLevel.Debug, false,
                         false, null, null, new ImmutableArray<byte>(), new bool?()));
 
-            var fullPath = Path.Combine(_workingFolder, assemblyName);
+            var fullPath = Path.Combine(_workingFolder, assemblyName) + ".dll";
             var assemblies = _assemblies.Where(x => !string.IsNullOrWhiteSpace(x.Location)).Select(x => x).ToList();
 
             if (_assemblyLoadContext is CustomAssemblyLoadContext customAssemblyLoadContext)
